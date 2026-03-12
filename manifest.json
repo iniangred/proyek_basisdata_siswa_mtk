@@ -1,0 +1,17 @@
+{
+  "name": "SAM Assistant",
+  "short_name": "SAM",
+  "description": "Aplikasi Manajemen Siswa, Kelas, dan Jurnal Harian oleh Ang",
+  "start_url": "./siswa.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

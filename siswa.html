@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Siswa Pro - Ang</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card { border-radius: 12px; }
+        .input-group-text { background-color: #e9ecef; }
+        .btn-wa { font-size: 0.75rem; padding: 4px 8px; }
+        .table-hover tbody tr:hover { background-color: #f8f9fa; }
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: #fff; border-top: 1px solid #dee2e6; border-radius: 0 0 12px 12px; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand fw-bold">Sam-App</span>
+            <div class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold mb-4" id="formTitle">Tambah Data Siswa Baru</h5>
+                
+                <input type="hidden" id="editNisnLama" value="">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">NISN</label>
+                        <input type="text" id="nisn" class="form-control" placeholder="00123...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold text-muted">Nama Lengkap</label>
+                        <input type="text" id="nama" class="form-control" placeholder="Nama Siswa">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small fw-bold text-muted">L/P</label>
+                        <select id="jk" class="form-select">
+                            <option value="L">Laki-laki (L)</option>
+                            <option value="P">Perempuan (P)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted">No. WA Siswa</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+62</span>
+                            <input type="tel" id="telepon" class="form-control" placeholder="812...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="small fw-bold text-muted">Nama Orang Tua/Wali</label>
+                        <input type="text" id="ortu" class="form-control" placeholder="Nama Ayah/Ibu/Wali">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold text-muted">Kontak Darurat (WA Wali)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+62</span>
+                            <input type="tel" id="darurat" class="form-control" placeholder="852... (Opsional)">
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end gap-2">
+                        <button id="btnBatal" onclick="batalEdit()" class="btn btn-secondary fw-bold py-2 w-50" style="display: none;">Batal</button>
+                        <button id="btnSimpan" onclick="simpanSiswa()" class="btn btn-primary fw-bold py-2 w-100">💾 Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="p-3 bg-white border-bottom rounded-top">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0 fw-bold">Buku Induk Digital</h5>
+                    <span class="badge bg-primary fs-6" id="totalSiswaBadge">0 Siswa</span>
+                </div>
+                
+                <div class="row g-2 align-items-center">
+                    <div class="col-auto d-flex align-items-center gap-2">
+                        <span class="small fw-bold text-muted">Tampilkan</span>
+                        <select id="selectRows" class="form-select form-select-sm w-auto" onchange="ubahBaris()">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="9999">Semua</option>
+                        </select>
+                        <span class="small fw-bold text-muted">baris</span>
+                    </div>
+                    <div class="col text-end">
+                        <input type="text" id="inputCari" class="form-control form-control-sm d-inline-block w-auto" placeholder="🔍 Cari nama atau NISN..." onkeyup="resetDanMuatData()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">NISN</th>
+                            <th>Nama Lengkap (A-Z)</th>
+                            <th>L/P</th>
+                            <th>WA Siswa</th>
+                            <th>Nama Wali</th>
+                            <th>Kontak Darurat</th>
+                            <th class="text-end pe-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listSiswa">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination-container">
+                <small class="text-muted fw-bold" id="infoHalaman">Halaman 1 dari 1</small>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary fw-bold" onclick="gantiHalaman(-1)">⬅ Sebelumnya</button>
+                    <button class="btn btn-sm btn-outline-primary fw-bold" onclick="gantiHalaman(1)">Selanjutnya ➡</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Variabel Global untuk Pagination
+        let halamanSaatIni = 1;
+        let barisPerHalaman = 10;
+        let dataTersaring = [];
+
+        function formatWA(num) {
+            let clean = num.replace(/\D/g, ''); 
+            if (clean.startsWith('0')) clean = '62' + clean.substring(1);
+            else if (clean !== '' && !clean.startsWith('62')) clean = '62' + clean;
+            return clean;
+        }
+
+        // Fungsi dipanggil saat ketik pencarian agar kembali ke halaman 1
+        function resetDanMuatData() {
+            halamanSaatIni = 1;
+            muatData();
+        }
+
+        function ubahBaris() {
+            barisPerHalaman = parseInt(document.getElementById('selectRows').value);
+            halamanSaatIni = 1;
+            muatData();
+        }
+
+        function gantiHalaman(arah) {
+            const totalHalaman = Math.ceil(dataTersaring.length / barisPerHalaman);
+            halamanSaatIni += arah;
+            
+            // Batasi agar tidak lewat batas
+            if (halamanSaatIni < 1) halamanSaatIni = 1;
+            if (halamanSaatIni > totalHalaman) halamanSaatIni = totalHalaman;
+            
+            muatData();
+        }
+
+        function muatData() {
+            const dataMentah = JSON.parse(localStorage.getItem('database_siswa')) || [];
+            const kataKunci = document.getElementById('inputCari').value.toLowerCase();
+            
+            // 1. FILTER PENCARIAN
+            dataTersaring = dataMentah.filter(s => 
+                s.nama.toLowerCase().includes(kataKunci) || 
+                s.nisn.toLowerCase().includes(kataKunci)
+            );
+
+            // 2. SORTIR ABJAD (A-Z)
+            dataTersaring.sort((a, b) => a.nama.localeCompare(b.nama));
+
+            document.getElementById('totalSiswaBadge').innerText = dataTersaring.length + " Siswa";
+
+            // 3. PAGINATION (Pemotongan Array)
+            const totalHalaman = Math.ceil(dataTersaring.length / barisPerHalaman) || 1;
+            if (halamanSaatIni > totalHalaman) halamanSaatIni = totalHalaman;
+
+            const indexMulai = (halamanSaatIni - 1) * barisPerHalaman;
+            const indexSelesai = indexMulai + barisPerHalaman;
+            const dataTampil = dataTersaring.slice(indexMulai, indexSelesai);
+
+            // Update Info Halaman
+            document.getElementById('infoHalaman').innerText = `Halaman ${halamanSaatIni} dari ${totalHalaman}`;
+
+            // 4. RENDER KE TABEL
+            const listSiswa = document.getElementById('listSiswa');
+            listSiswa.innerHTML = ''; 
+
+            if(dataTampil.length === 0) {
+                listSiswa.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data siswa yang ditemukan.</td></tr>`;
+                return;
+            }
+
+            dataTampil.forEach((s) => {
+                const daruratText = s.darurat ? s.darurat : '';
+                const tombolWali = daruratText 
+                    ? `<a href="https://wa.me/${daruratText}" target="_blank" class="btn btn-outline-danger btn-wa fw-bold">Hubungi Wali 🚨</a>` 
+                    : `<span class="text-muted small">-</span>`;
+
+                // PERHATIKAN: Edit dan Hapus sekarang menggunakan NISN sebagai parameter, bukan index!
+                const row = `
+                    <tr>
+                        <td class="ps-3 text-muted">${s.nisn}</td>
+                        <td class="fw-bold text-dark">${s.nama}</td>
+                        <td>${s.jk}</td>
+                        <td>
+                            <a href="https://wa.me/${s.telepon}" target="_blank" class="btn btn-outline-success btn-wa">Chat Siswa 📱</a>
+                        </td>
+                        <td>${s.ortu || '-'}</td>
+                        <td>${tombolWali}</td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editSiswa('${s.nisn}')">✏️</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="hapusSiswa('${s.nisn}')">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                listSiswa.innerHTML += row;
+            });
+        }
+
+        function simpanSiswa() {
+            const nisnBaru = document.getElementById('nisn').value.trim();
+            const nama = document.getElementById('nama').value.trim();
+            const jk = document.getElementById('jk').value;
+            const ortu = document.getElementById('ortu').value.trim();
+            
+            const telInput = document.getElementById('telepon').value.trim();
+            const daruratInput = document.getElementById('darurat').value.trim();
+            
+            const nisnLama = document.getElementById('editNisnLama').value;
+
+            const teleponClean = formatWA(telInput);
+            const daruratClean = formatWA(daruratInput);
+
+            if(!nisnBaru || !nama || !teleponClean) {
+                alert("Mohon isi minimal NISN, Nama, dan No WA Siswa!");
+                return;
+            }
+
+            let data = JSON.parse(localStorage.getItem('database_siswa')) || [];
+            
+            if(nisnLama !== "") {
+                // MODE EDIT
+                // Jika NISN diubah, cek apakah NISN baru bentrok dengan data lain
+                if (nisnBaru !== nisnLama && data.some(s => s.nisn === nisnBaru)) {
+                    alert("NISN baru yang dimasukkan sudah terdaftar pada siswa lain!");
+                    return;
+                }
+                
+                // Cari index asli di database berdasarkan nisnLama
+                const indexAsli = data.findIndex(s => s.nisn === nisnLama);
+                if(indexAsli !== -1) {
+                    data[indexAsli] = { nisn: nisnBaru, nama, jk, ortu, telepon: teleponClean, darurat: daruratClean };
+                    alert("Data berhasil diperbarui!");
+                }
+            } else {
+                // MODE TAMBAH BARU
+                if(data.some(s => s.nisn === nisnBaru)) {
+                    alert("NISN ini sudah terdaftar di Buku Induk!");
+                    return;
+                }
+                data.push({ nisn: nisnBaru, nama, jk, ortu, telepon: teleponClean, darurat: daruratClean });
+            }
+            
+            localStorage.setItem('database_siswa', JSON.stringify(data));
+            muatData();
+            batalEdit();
+        }
+
+        // Fungsi Edit menggunakan NISN
+        function editSiswa(targetNisn) {
+            const data = JSON.parse(localStorage.getItem('database_siswa')) || [];
+            const s = data.find(siswa => siswa.nisn === targetNisn);
+            
+            if(!s) return alert("Terjadi kesalahan, data tidak ditemukan.");
+
+            document.getElementById('editNisnLama').value = s.nisn;
+            document.getElementById('nisn').value = s.nisn;
+            document.getElementById('nama').value = s.nama;
+            document.getElementById('jk').value = s.jk;
+            document.getElementById('telepon').value = s.telepon;
+            document.getElementById('ortu').value = s.ortu || '';
+            document.getElementById('darurat').value = s.darurat || '';
+            
+            document.getElementById('formTitle').innerText = "Edit Data Siswa";
+            document.getElementById('formTitle').classList.add('text-warning');
+            
+            const btnSimpan = document.getElementById('btnSimpan');
+            btnSimpan.innerHTML = '🔄 Update Data';
+            btnSimpan.classList.replace('btn-primary', 'btn-warning');
+            btnSimpan.classList.replace('w-100', 'w-50');
+            
+            document.getElementById('btnBatal').style.display = 'block';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function batalEdit() {
+            document.getElementById('editNisnLama').value = "";
+            document.getElementById('nisn').value = '';
+            document.getElementById('nama').value = '';
+            document.getElementById('ortu').value = '';
+            document.getElementById('telepon').value = '';
+            document.getElementById('darurat').value = '';
+            
+            document.getElementById('formTitle').innerText = "Tambah Data Siswa Baru";
+            document.getElementById('formTitle').classList.remove('text-warning');
+            
+            const btnSimpan = document.getElementById('btnSimpan');
+            btnSimpan.innerHTML = '💾 Simpan Data';
+            btnSimpan.classList.replace('btn-warning', 'btn-primary');
+            btnSimpan.classList.replace('w-50', 'w-100');
+            
+            document.getElementById('btnBatal').style.display = 'none';
+        }
+
+        // Fungsi Hapus menggunakan NISN
+        function hapusSiswa(targetNisn) {
+            if(confirm("Apakah Ang yakin ingin menghapus data siswa ini secara permanen dari Buku Induk?")) {
+                let data = JSON.parse(localStorage.getItem('database_siswa')) || [];
+                // Filter out the deleted NISN
+                data = data.filter(s => s.nisn !== targetNisn);
+                
+                localStorage.setItem('database_siswa', JSON.stringify(data));
+                
+                // Cek jika halaman saat ini jadi kosong karena penghapusan
+                if (dataTersaring.length - 1 <= (halamanSaatIni - 1) * barisPerHalaman && halamanSaatIni > 1) {
+                    halamanSaatIni--; 
+                }
+                
+                muatData();
+                batalEdit();
+            }
+        }
+
+        window.onload = muatData;
+    </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SAM Assistant Ready!'))
+                .catch(err => console.log('Gagal memuat SAM', err));
+        });
+    }
+    </script>
+</body>
+</html>

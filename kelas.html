@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Kelas Pro - Ang</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        .card-kelas { transition: 0.2s; border-radius: 12px; border: 1px solid #dee2e6; border-top: 4px solid #198754; cursor: pointer; }
+        .card-kelas:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .student-list { max-height: 50vh; overflow-y: auto; }
+        .student-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        #viewDetail { display: none; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand fw-bold">Sam-App</span>
+            <div class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        <div id="viewUtama">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0 fw-bold">Manajemen Rombel</h4>
+                <div class="d-flex gap-2">
+                    <button onclick="eksporSemuaKelasExcel()" class="btn btn-outline-success btn-sm fw-bold">📗 Ekspor Semua Kelas</button>
+                    <button onclick="bukaModalImport()" class="btn btn-outline-success btn-sm fw-bold">📘 Impor Excel</button>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3">Buat Kelas Baru</h6>
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <input type="text" id="namaKelas" class="form-control" placeholder="Nama Kelas (ex: X MIPA 1)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" id="tahunAjaran" class="form-control" placeholder="Tahun Ajaran (ex: 2025/2026)">
+                        </div>
+                        <div class="col-md-3">
+                            <button onclick="simpanKelas()" class="btn btn-success w-100">Buat Kelas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" id="containerKelas"></div>
+        </div>
+
+        <div id="viewDetail">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div>
+                    <button onclick="tutupDetail()" class="btn btn-sm btn-secondary mb-2">⬅ Kembali ke Daftar Kelas</button>
+                    <h3 class="fw-bold text-success mb-0" id="detailNamaKelas">Nama Kelas</h3>
+                    <p class="text-muted mb-0" id="detailTahunKelas">Tahun Ajaran</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+                            📥 Ekspor Kelas Ini
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="eksporDetailExcel()">📗 Format Excel (.xlsx)</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="eksporDetailPDF()">📄 Format PDF (Siap Print)</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary shadow-sm" onclick="bukaModalAnggota()">+ Kelola Anggota Kelas</button>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">Daftar Siswa (Urut A-Z) | Total: <span id="totalSiswaDetail">0</span></h6>
+                        <input type="text" id="cariSiswaDetail" class="form-control form-control-sm w-25" placeholder="Cari nama..." onkeyup="filterSiswaDetail()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">No</th>
+                                    <th>NISN</th>
+                                    <th>Nama Siswa</th>
+                                    <th>L/P</th>
+                                    <th class="text-center">Kontak Siswa</th>
+                                    <th class="text-center">Kontak Wali</th>
+                                    <th class="text-end pe-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelSiswaDetail"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-end">
+                <button class="btn btn-outline-danger btn-sm" onclick="hapusKelasDariDetail()">🗑️ Hapus Kelas Ini</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalAnggota" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Pilih Anggota Kelas</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 border-bottom bg-light">
+                        <input type="text" id="cariSiswaModal" class="form-control" placeholder="Cari nama siswa..." onkeyup="filterSiswaModal()">
+                    </div>
+                    <div class="student-list" id="listPilihSiswa"></div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button onclick="simpanAnggota()" class="btn btn-success w-100 fw-bold">Simpan Pilihan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalImportExcel" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">Impor Data Kelas (.xlsx)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small mb-4">
+                        <strong>Panduan:</strong> Pastikan kolom pada file Excel Anda sesuai dengan format sistem. Unduh format kosong di bawah ini jika belum memilikinya.
+                    </div>
+                    <button onclick="downloadFormatExcel()" class="btn btn-outline-primary w-100 mb-4 fw-bold">
+                        📥 Unduh Format Excel Kosong
+                    </button>
+                    <hr>
+                    <div class="mb-3 mt-2">
+                        <label class="form-label fw-bold">Pilih File Excel yang Sudah Diisi</label>
+                        <input class="form-control" type="file" id="fileUploadExcel" accept=".xlsx, .xls">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button onclick="prosesImportExcel()" class="btn btn-success w-100 fw-bold">Mulai Impor Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let db_kelas = JSON.parse(localStorage.getItem('db_kelas')) || [];
+        let db_siswa = JSON.parse(localStorage.getItem('database_siswa')) || [];
+        
+        const modalAnggota = new bootstrap.Modal(document.getElementById('modalAnggota'));
+        const modalImport = new bootstrap.Modal(document.getElementById('modalImportExcel'));
+        
+        let indexKelasAktif = null;
+
+        function muatKelas() {
+            const container = document.getElementById('containerKelas');
+            container.innerHTML = '';
+
+            if (db_kelas.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center text-muted mt-5"><p>Belum ada kelas yang dibuat.</p></div>`;
+                return;
+            }
+
+            db_kelas.forEach((k, index) => {
+                const jumlahSiswa = k.anggota ? k.anggota.length : 0;
+                container.innerHTML += `
+                <div class="col-md-4 mb-3">
+                    <div class="card card-kelas h-100" onclick="bukaDetail(${index})">
+                        <div class="card-body">
+                            <h5 class="fw-bold text-success mb-1">${k.nama}</h5>
+                            <p class="small text-muted mb-3">Tahun Ajaran: ${k.tahun}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-light text-dark border">👥 ${jumlahSiswa} Siswa</span>
+                                <span class="text-primary small fw-bold">Buka ➔</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function simpanKelas() {
+            const nama = document.getElementById('namaKelas').value;
+            const tahun = document.getElementById('tahunAjaran').value;
+            if(!nama) return alert("Nama kelas wajib diisi!");
+
+            db_kelas.push({ nama: nama, tahun: tahun || "-", anggota: [] });
+            localStorage.setItem('db_kelas', JSON.stringify(db_kelas));
+            muatKelas();
+            
+            document.getElementById('namaKelas').value = '';
+            document.getElementById('tahunAjaran').value = '';
+        }
+
+        function bukaDetail(index) {
+            indexKelasAktif = index;
+            const kelas = db_kelas[index];
+            document.getElementById('viewUtama').style.display = 'none';
+            document.getElementById('viewDetail').style.display = 'block';
+            document.getElementById('detailNamaKelas').innerText = kelas.nama;
+            document.getElementById('detailTahunKelas').innerText = "Tahun Ajaran: " + kelas.tahun;
+            muatTabelSiswaDetail();
+        }
+
+        function tutupDetail() {
+            indexKelasAktif = null;
+            document.getElementById('viewDetail').style.display = 'none';
+            document.getElementById('viewUtama').style.display = 'block';
+            muatKelas(); 
+        }
+
+        function muatTabelSiswaDetail() {
+            const kelas = db_kelas[indexKelasAktif];
+            const tbody = document.getElementById('tabelSiswaDetail');
+            tbody.innerHTML = '';
+            
+            let anggota = kelas.anggota || [];
+            document.getElementById('totalSiswaDetail').innerText = anggota.length;
+
+            if(anggota.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa di kelas ini.</td></tr>`;
+                return;
+            }
+
+            // MENGURUTKAN SISWA DI DALAM KELAS BERDASARKAN ABJAD (A-Z)
+            let dataSiswaKelas = anggota.map(nisn => db_siswa.find(s => s.nisn === nisn)).filter(s => s);
+            dataSiswaKelas.sort((a, b) => a.nama.localeCompare(b.nama));
+
+            let no = 1;
+            dataSiswaKelas.forEach((siswa) => {
+                const daruratText = siswa.darurat ? siswa.darurat : '';
+                const tombolWali = daruratText 
+                    ? `<a href="https://wa.me/${daruratText}" target="_blank" class="btn btn-sm btn-outline-danger p-1" style="font-size:0.75rem;">Hubungi Wali 🚨</a>` 
+                    : `<span class="text-muted small">-</span>`;
+
+                tbody.innerHTML += `
+                <tr class="baris-siswa-detail">
+                    <td class="ps-3">${no++}</td>
+                    <td class="text-muted">${siswa.nisn}</td>
+                    <td class="fw-bold nama-detail">${siswa.nama}</td>
+                    <td>${siswa.jk}</td>
+                    <td class="text-center">
+                        <a href="https://wa.me/${siswa.telepon}" target="_blank" class="btn btn-sm btn-outline-success p-1" style="font-size:0.75rem;">Chat Siswa 📱</a>
+                    </td>
+                    <td class="text-center">${tombolWali}</td>
+                    <td class="text-end pe-3">
+                        <button class="btn btn-sm btn-danger" onclick="keluarkanSiswa('${siswa.nisn}')">Keluarkan</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function keluarkanSiswa(nisn) {
+            if(confirm("Keluarkan siswa ini dari kelas?")) {
+                db_kelas[indexKelasAktif].anggota = db_kelas[indexKelasAktif].anggota.filter(id => id !== nisn);
+                localStorage.setItem('db_kelas', JSON.stringify(db_kelas));
+                muatTabelSiswaDetail(); 
+            }
+        }
+
+        function hapusKelasDariDetail() {
+            if(confirm("Yakin menghapus kelas ini secara permanen?")) {
+                db_kelas.splice(indexKelasAktif, 1);
+                localStorage.setItem('db_kelas', JSON.stringify(db_kelas));
+                tutupDetail(); 
+            }
+        }
+
+        function bukaModalAnggota() {
+            document.getElementById('cariSiswaModal').value = '';
+            const listSiswa = document.getElementById('listPilihSiswa');
+            listSiswa.innerHTML = '';
+            
+            const anggotaSaatIni = db_kelas[indexKelasAktif].anggota || [];
+
+            if (db_siswa.length === 0) {
+                listSiswa.innerHTML = `<div class="p-4 text-center text-muted">Buku Induk kosong.</div>`;
+            } else {
+                // MENGURUTKAN DAFTAR SISWA DI MODAL BERDASARKAN ABJAD (A-Z)
+                let siswaSorted = [...db_siswa].sort((a, b) => a.nama.localeCompare(b.nama));
+                
+                siswaSorted.forEach(siswa => {
+                    const isChecked = anggotaSaatIni.includes(siswa.nisn) ? 'checked' : '';
+                    listSiswa.innerHTML += `
+                    <div class="student-item item-filter-modal">
+                        <div>
+                            <span class="fw-bold d-block nama-filter-modal">${siswa.nama}</span>
+                            <small class="text-muted">${siswa.nisn} | L/P: ${siswa.jk}</small>
+                        </div>
+                        <div class="form-check form-switch fs-4">
+                            <input class="form-check-input checkbox-siswa" type="checkbox" value="${siswa.nisn}" ${isChecked}>
+                        </div>
+                    </div>`;
+                });
+            }
+            modalAnggota.show();
+        }
+
+        function simpanAnggota() {
+            const checkboxes = document.querySelectorAll('.checkbox-siswa');
+            let anggotaBaru = [];
+            checkboxes.forEach(cb => {
+                if(cb.checked) anggotaBaru.push(cb.value);
+            });
+
+            db_kelas[indexKelasAktif].anggota = anggotaBaru;
+            localStorage.setItem('db_kelas', JSON.stringify(db_kelas));
+            
+            modalAnggota.hide();
+            muatTabelSiswaDetail(); 
+        }
+
+        function filterSiswaDetail() {
+            const input = document.getElementById('cariSiswaDetail').value.toLowerCase();
+            const baris = document.querySelectorAll('.baris-siswa-detail');
+            baris.forEach(b => {
+                const nama = b.querySelector('.nama-detail').innerText.toLowerCase();
+                b.style.display = nama.includes(input) ? "" : "none";
+            });
+        }
+
+        function filterSiswaModal() {
+            const input = document.getElementById('cariSiswaModal').value.toLowerCase();
+            const items = document.querySelectorAll('.item-filter-modal');
+            items.forEach(item => {
+                const nama = item.querySelector('.nama-filter-modal').innerText.toLowerCase();
+                item.style.display = nama.includes(input) ? "flex" : "none";
+            });
+        }
+
+        function eksporSemuaKelasExcel() {
+            if(db_kelas.length === 0) return alert("Belum ada kelas untuk diekspor.");
+            
+            const dataExcel = db_kelas.map(k => ({
+                "Nama Kelas": k.nama,
+                "Tahun Ajaran": k.tahun,
+                "Anggota (NISN)": k.anggota ? k.anggota.join(", ") : ""
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Rombel Master");
+            XLSX.writeFile(workbook, "Data_Master_Rombel_Ang.xlsx");
+        }
+
+        function eksporDetailExcel() {
+            const kelas = db_kelas[indexKelasAktif];
+            if(!kelas.anggota || kelas.anggota.length === 0) return alert("Belum ada siswa di kelas ini.");
+
+            let dataSiswaKelas = kelas.anggota.map(nisn => db_siswa.find(s => s.nisn === nisn)).filter(s => s);
+            dataSiswaKelas.sort((a, b) => a.nama.localeCompare(b.nama));
+
+            const dataExport = dataSiswaKelas.map((siswa, index) => {
+                return {
+                    "No": index + 1,
+                    "NISN": siswa.nisn,
+                    "Nama Siswa": siswa.nama,
+                    "L/P": siswa.jk,
+                    "Kontak Siswa": siswa.telepon || "-",
+                    "Kontak Wali": siswa.darurat || "-"
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, kelas.nama.substring(0, 31)); 
+            XLSX.writeFile(workbook, `Daftar_Siswa_${kelas.nama}.xlsx`);
+        }
+
+        function eksporDetailPDF() {
+            const kelas = db_kelas[indexKelasAktif];
+            if(!kelas.anggota || kelas.anggota.length === 0) return alert("Belum ada siswa di kelas ini.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(14);
+            doc.text(`Daftar Siswa Kelas: ${kelas.nama}`, 14, 15);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Tahun Ajaran: ${kelas.tahun}`, 14, 21);
+
+            const tableColumn = ["No", "NISN", "Nama Siswa", "L/P", "Kontak Siswa", "Kontak Wali"];
+            const tableRows = [];
+
+            let dataSiswaKelas = kelas.anggota.map(nisn => db_siswa.find(s => s.nisn === nisn)).filter(s => s);
+            dataSiswaKelas.sort((a, b) => a.nama.localeCompare(b.nama));
+
+            dataSiswaKelas.forEach((siswa, index) => {
+                const rowData = [
+                    index + 1,
+                    siswa.nisn,
+                    siswa.nama,
+                    siswa.jk,
+                    siswa.telepon || "-",
+                    siswa.darurat || "-"
+                ];
+                tableRows.push(rowData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 28,
+                theme: 'grid',
+                headStyles: { fillColor: [25, 135, 84] }, 
+                styles: { fontSize: 9 },
+                columnStyles: {
+                    0: { cellWidth: 10 },
+                    1: { cellWidth: 25 },
+                    3: { cellWidth: 15 }
+                }
+            });
+
+            doc.save(`Daftar_Siswa_${kelas.nama}.pdf`);
+        }
+
+        function bukaModalImport() {
+            document.getElementById('fileUploadExcel').value = ''; 
+            modalImport.show();
+        }
+
+        function downloadFormatExcel() {
+            const formatData = [{
+                "Nama Kelas": "Contoh: X MIPA 1",
+                "Tahun Ajaran": "Contoh: 2025/2026",
+                "Anggota (NISN)": "001234, 005678, 009101 (Pisahkan NISN dengan koma)"
+            }];
+
+            const worksheet = XLSX.utils.json_to_sheet(formatData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Format Import");
+            XLSX.writeFile(workbook, "Format_Import_Rombel.xlsx");
+        }
+
+        function prosesImportExcel() {
+            const fileInput = document.getElementById('fileUploadExcel');
+            if(fileInput.files.length === 0) return alert("Silakan pilih file Excel terlebih dahulu!");
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonFile = XLSX.utils.sheet_to_json(worksheet);
+
+                    const kelasBaru = jsonFile.map(row => {
+                        let anggotaArray = [];
+                        if (row["Anggota (NISN)"]) {
+                            anggotaArray = row["Anggota (NISN)"].toString().split(',')
+                                .map(n => n.trim())
+                                .filter(n => n !== "" && !n.includes("Pisahkan NISN")); 
+                        }
+                        return {
+                            nama: row["Nama Kelas"] || "Kelas Tanpa Nama",
+                            tahun: row["Tahun Ajaran"] || "-",
+                            anggota: anggotaArray
+                        };
+                    });
+
+                    const kelasBersih = kelasBaru.filter(k => !k.nama.includes("Contoh:"));
+
+                    if(confirm("Terapkan data impor ini? Seluruh data rombongan belajar akan diperbarui sesuai file Excel.")) {
+                        db_kelas = kelasBersih;
+                        localStorage.setItem('db_kelas', JSON.stringify(db_kelas));
+                        muatKelas();
+                        modalImport.hide();
+                        alert("Data kelas berhasil diimpor!");
+                    }
+                } catch(error) {
+                    alert("Gagal membaca file Excel. Pastikan Anda menggunakan file Format yang telah diunduh.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        window.onload = muatKelas;
+    </script>
+    
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SAM Assistant Ready di Kelas!'))
+                .catch(err => console.log('Gagal memuat SAM', err));
+        });
+    }
+    </script>
+</body>
+</html>

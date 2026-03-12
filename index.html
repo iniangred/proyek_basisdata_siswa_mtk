@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAM Assistant - Dashboard Ang</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .card-stat { transition: 0.3s; border: none; border-radius: 12px; }
+        .card-stat:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .icon-stat { font-size: 2.5rem; opacity: 0.8; }
+        
+        .menu-cepat { transition: 0.2s; border-radius: 15px; text-decoration: none; color: inherit; display: block; border: 1px solid #e0e0e0; background: #fff;}
+        .menu-cepat:hover { background-color: #f8f9fa; border-color: #0d6efd; box-shadow: 0 4px 10px rgba(13,110,253,0.15); }
+        .menu-icon { font-size: 2rem; margin-bottom: 10px; }
+        
+        .chart-container { position: relative; height: 250px; width: 100%; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand navbar-dark bg-primary mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand fw-bold fs-4">🤖 SAM Assistant</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto fw-bold">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="siswa.html">Siswa</a></li>
+                    <li class="nav-item"><a class="nav-link" href="kelas.html">Kelas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="kurikulum.html">Kurikulum</a></li>
+                    <li class="nav-item"><a class="nav-link" href="jurnal.html">Jurnal</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold text-dark">Selamat Datang, Ang! 👋</h2>
+                <p class="text-muted">Ini adalah ringkasan data sekolah dan aktivitas mengajarmu saat ini.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <p class="text-muted fw-bold mb-0" id="tanggalHariIni"></p>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card card-stat bg-primary text-white shadow-sm h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-white-50 fw-bold">Total Siswa</p>
+                            <h3 class="fw-bold mb-0" id="totSiswa">0</h3>
+                        </div>
+                        <div class="icon-stat">👥</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card card-stat bg-success text-white shadow-sm h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-white-50 fw-bold">Total Rombel</p>
+                            <h3 class="fw-bold mb-0" id="totKelas">0</h3>
+                        </div>
+                        <div class="icon-stat">🏫</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card card-stat bg-warning text-dark shadow-sm h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-dark-50 fw-bold">Mata Pelajaran</p>
+                            <h3 class="fw-bold mb-0" id="totMapel">0</h3>
+                        </div>
+                        <div class="icon-stat">📚</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card card-stat bg-danger text-white shadow-sm h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-white-50 fw-bold">Jurnal Terisi</p>
+                            <h3 class="fw-bold mb-0" id="totJurnal">0</h3>
+                        </div>
+                        <div class="icon-stat">📝</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                        <h5 class="fw-bold mb-0">📊 Grafik Kehadiran Siswa</h5>
+                        <p class="small text-muted">Akumulasi dari seluruh jurnal mengajar</p>
+                    </div>
+                    <div class="card-body d-flex justify-content-center align-items-center">
+                        <div class="chart-container">
+                            <canvas id="chartAbsensi"></canvas>
+                        </div>
+                    </div>
+                    <div id="infoGrafikKosong" class="text-center text-muted pb-3" style="display:none;">
+                        <small>Belum ada data absensi untuk ditampilkan.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">🚀 Akses Cepat</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3 text-center">
+                                <a href="siswa.html" class="menu-cepat p-3">
+                                    <div class="menu-icon">📇</div>
+                                    <span class="small fw-bold">Buku Induk</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3 text-center">
+                                <a href="kelas.html" class="menu-cepat p-3">
+                                    <div class="menu-icon">🚪</div>
+                                    <span class="small fw-bold">Kelas</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3 text-center">
+                                <a href="kurikulum.html" class="menu-cepat p-3">
+                                    <div class="menu-icon">📖</div>
+                                    <span class="small fw-bold">Kurikulum</span>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-3 text-center">
+                                <a href="jurnal.html" class="menu-cepat p-3">
+                                    <div class="menu-icon">✍️</div>
+                                    <span class="small fw-bold">Isi Jurnal</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-2">⚡ Aktivitas Mengajar Terakhir</h6>
+                        <div id="listAktivitas" class="list-group list-group-flush border-top pt-2">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set Tanggal Hari Ini
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('tanggalHariIni').innerText = new Date().toLocaleDateString('id-ID', options);
+
+        // Mengambil Data dari LocalStorage
+        const db_siswa = JSON.parse(localStorage.getItem('database_siswa')) || [];
+        const db_kelas = JSON.parse(localStorage.getItem('db_kelas')) || [];
+        const db_kurikulum = JSON.parse(localStorage.getItem('db_kurikulum')) || [];
+        const db_jurnal = JSON.parse(localStorage.getItem('db_jurnal')) || [];
+
+        // 1. Render Angka Ringkasan (Summary Cards)
+        document.getElementById('totSiswa').innerText = db_siswa.length;
+        document.getElementById('totKelas').innerText = db_kelas.length;
+        document.getElementById('totMapel').innerText = db_kurikulum.length;
+        document.getElementById('totJurnal').innerText = db_jurnal.length;
+
+        // 2. Render Aktivitas Terakhir (Ambil 3 jurnal paling baru)
+        const listAktivitas = document.getElementById('listAktivitas');
+        if(db_jurnal.length === 0) {
+            listAktivitas.innerHTML = `<p class="text-muted small mt-2">Belum ada jurnal yang diisi.</p>`;
+        } else {
+            // Urutkan jurnal dari yang paling baru
+            let jurnalSorted = [...db_jurnal].sort((a, b) => new Date(b.tgl) - new Date(a.tgl));
+            // Ambil 3 teratas
+            let tigaTerbaru = jurnalSorted.slice(0, 3);
+            
+            tigaTerbaru.forEach(j => {
+                listAktivitas.innerHTML += `
+                <a href="jurnal.html" class="list-group-item list-group-item-action px-0">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">${j.kelas} - ${j.mapel}</h6>
+                        <small class="text-muted">${j.tgl}</small>
+                    </div>
+                    <p class="mb-1 small text-truncate">Materi: ${j.atp}</p>
+                </a>`;
+            });
+        }
+
+        // 3. Render Grafik Absensi dengan Chart.js
+        let totalH = 0, totalS = 0, totalI = 0, totalA = 0;
+
+        // Menghitung akumulasi absen dari seluruh jurnal
+        db_jurnal.forEach(j => {
+            if(j.statistik) {
+                totalH += j.statistik.H || 0;
+                totalS += j.statistik.S || 0;
+                totalI += j.statistik.I || 0;
+                totalA += j.statistik.A || 0;
+            }
+        });
+
+        const totalAbsensi = totalH + totalS + totalI + totalA;
+
+        if(totalAbsensi === 0) {
+            document.getElementById('chartAbsensi').style.display = 'none';
+            document.getElementById('infoGrafikKosong').style.display = 'block';
+        } else {
+            const ctx = document.getElementById('chartAbsensi').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hadir (H)', 'Sakit (S)', 'Izin (I)', 'Alpa (A)'],
+                    datasets: [{
+                        data: [totalH, totalS, totalI, totalA],
+                        backgroundColor: [
+                            '#198754', // Hijau (H)
+                            '#0dcaf0', // Biru Muda (S)
+                            '#ffc107', // Kuning (I)
+                            '#dc3545'  // Merah (A)
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) label += ': ';
+                                    let value = context.raw;
+                                    let percentage = Math.round((value / totalAbsensi) * 100) + '%';
+                                    return label + value + ' Siswa (' + percentage + ')';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SAM Assistant Ready di Dashboard!'))
+                .catch(err => console.log('Gagal memuat SAM', err));
+        });
+    }
+    </script>
+</body>
+</html>
